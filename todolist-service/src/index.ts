@@ -1,95 +1,118 @@
 import { Elysia } from "elysia";
-import mockdata from "../../data.json"; // Importing the mock data
+import mongoose, { Schema, model } from "mongoose";
 
-interface TodoRequestBody {
-  time: string;
-  task?: string; // Optional because DELETE only needs time
-}
+// Constants for environment variables
+const PORT = Number(process.env.PORT) || 3003;
+const MONGO_URI = process.env.MONGOURI || "mongodb://localhost:27017/todoApp";
+
+// Connect to MongoDB using Mongoose
+mongoose
+  .connect(MONGO_URI)
+  .then(() => console.log("MongoDB connected successfully with Mongoose!"))
+  .catch((error) => console.error("Error connecting to MongoDB", error));
+
+// Define Mongoose schema and model for the todo collection
+const TodoSchema = new Schema(
+  {
+    time: { type: String, required: true, unique: true },
+    task: { type: String, required: true },
+  },
+  { timestamps: true } // Automatically adds createdAt and updatedAt fields
+);
+
+const Todo = model("Todo", TodoSchema);
 
 const app = new Elysia();
 
-// Function to simulate saving data (in-memory update for now)
-const saveData = (data: any) => {
-  // This function won't actually save data to a file in this version
-  // You would need a method to save the data to disk (like `fs.writeFileSync`) if you wish
-  console.log("Simulated saving data:", JSON.stringify(data, null, 2));
-};
-
 // Create a new todo or update an existing one
 app.post("/todos", async ({ body }) => {
-  const { time, task } = (await body) as TodoRequestBody;
+  const { time, task } = (await body) as { time: string; task: string };
 
   if (!time || !task) {
     return { error: "Time and task are required" };
   }
 
-  const todo = mockdata["todo-list"].find(
-    (item: any) => Object.keys(item)[0] === time
-  );
+  try {
+    const existingTodo = await Todo.findOne({ time });
 
-  if (todo) {
-    todo[time] = task; // Update the existing task
-  } else {
-    mockdata["todo-list"].push({ [time]: task }); // Add a new task
+    if (existingTodo) {
+      // Update the existing task
+      existingTodo.task = task;
+      await existingTodo.save();
+    } else {
+      // Add a new task
+      await Todo.create({ time, task });
+    }
+
+    const updatedTodos = await Todo.find();
+
+    return {
+      message: "Task added/updated successfully",
+      todos: updatedTodos,
+    };
+  } catch (error) {
+    console.error("Error in POST /todos:", error);
+    return { error: "An error occurred while processing your request." };
   }
-
-  saveData(mockdata); // Simulate saving the updated data
-
-  return {
-    message: "Task added/updated successfully",
-    todos: mockdata["todo-list"],
-  };
 });
 
 // Edit an existing todo
 app.put("/todos", async ({ body }) => {
-  const { time, task } = (await body) as TodoRequestBody;
+  const { time, task } = (await body) as { time: string; task: string };
 
   if (!time || !task) {
     return { error: "Time and task are required" };
   }
 
-  const todo = mockdata["todo-list"].find(
-    (item: any) => Object.keys(item)[0] === time
-  );
+  try {
+    const updatedTodo = await Todo.findOneAndUpdate(
+      { time },
+      { task },
+      { new: true } // Return the updated document
+    );
 
-  if (todo) {
-    todo[time:any] = task; // Update the task
-    saveData(mockdata); // Simulate saving the updated data
-    return {
-      message: "Task updated successfully",
-      todos: mockdata["todo-list"],
-    };
-  } else {
-    return { error: "Task not found for the given time" };
+    if (updatedTodo) {
+      const updatedTodos = await Todo.find();
+      return {
+        message: "Task updated successfully",
+        todos: updatedTodos,
+      };
+    } else {
+      return { error: "Task not found for the given time" };
+    }
+  } catch (error) {
+    console.error("Error in PUT /todos:", error);
+    return { error: "An error occurred while processing your request." };
   }
 });
 
 // Delete a todo
 app.delete("/todos", async ({ body }) => {
-  const { time } = (await body) as TodoRequestBody;
+  const { time } = (await body) as { time: string };
 
   if (!time) {
     return { error: "Time is required" };
   }
 
-  const index = mockdata["todo-list"].findIndex(
-    (item: any) => Object.keys(item)[0] === time
-  );
+  try {
+    const result = await Todo.findOneAndDelete({ time });
 
-  if (index !== -1) {
-    mockdata["todo-list"].splice(index, 1); // Remove the task
-    saveData(mockdata); // Simulate saving the updated data
-    return {
-      message: "Task deleted successfully",
-      todos: mockdata["todo-list"],
-    };
-  } else {
-    return { error: "Task not found for the given time" };
+    if (result) {
+      const updatedTodos = await Todo.find();
+      return {
+        message: "Task deleted successfully",
+        todos: updatedTodos,
+      };
+    } else {
+      return { error: "Task not found for the given time" };
+    }
+  } catch (error) {
+    console.error("Error in DELETE /todos:", error);
+    return { error: "An error occurred while processing your request." };
   }
 });
 
 // Start the server
-app.listen(3003, () =>
-  console.log("Elysia server running on http://localhost:3003 🚀")
+app.listen(PORT, () =>
+  console.log(`Elysia server running on http://localhost:${PORT} 🚀`)
 );

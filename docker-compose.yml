@@ -1,7 +1,7 @@
 version: "3.1"
 
 services:
-  user-services:
+  auth-services:
     build:
       context: ./auth-service
       dockerfile: Dockerfile
@@ -10,7 +10,7 @@ services:
     ports:
       - "3001:3001"
 
-  restaurant-services:
+  get-todolist-services:
     build:
       context: ./get-todolist-service
       dockerfile: Dockerfile
@@ -19,7 +19,7 @@ services:
     ports:
       - "3002:3002"
 
-  order-services:
+  todolist-services:
     build:
       context: ./todolist-service
       dockerfile: Dockerfile
@@ -27,3 +27,14 @@ services:
       - PORT=3003
     ports:
       - "3003:3003"
+
+  mongo:
+    image: mongo
+    container_name: network-microservices
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=
+      - MONGO_INITDB_ROOT_PASSWORD=
+    volumes:
+      - ./data:/data/db
