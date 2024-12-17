@@ -1,30 +1,50 @@
 import { Elysia } from "elysia";
-import mockdata from "../../data.json";
+import mongoose from "mongoose";
+import { UserModel } from "../model/UserModel";
 
-const auth = new Elysia();
+const PORT = process.env.PORT || 3001;
+const MONGOURI = String(process.env.MONGOURI);
+const app = new Elysia();
 
-auth
-  .post("/login", ({ body }) => {
-    const { username, password } = body as { username: string; password: string };
-    const user = mockdata.accounts.find(
-      (user) => user.username === username && user.password === password
-    );
+app.post("/register", async ({ body }) => {
+  const { username, password } = body as { username: string; password: string };
+  const user = await UserModel.findOne({ username });
+  if (user) {
+    return { error: "User already exists" };
+  }
+  const result = new UserModel({ username, password });
+  await result.save();
+  return { message: "User registered successfully", username: result.username };
+})
 
-    if (!user) {
-      return { error: "Invalid username or password" };
-    }
-    return { message: "Login successful", username };
-  })
-  .get("/all-users", () => mockdata.accounts)
-  .get("/user/:id", ({ params }) => {
-    const { id } = params;
-    const user = mockdata.accounts.find((user) => user.id === Number(id));
-    if (!user) {
-      return { error: "User not found" };
-    }
-    return { username: user.username };
-  });
+app.post("/login", async ({ body }) => {
+  const { username, password } = body as { username: string; password: string };
+  const user = await UserModel.findOne({ username, password });
+  if (!user) {
+    return { error: "Invalid username or password" };
+  }
+  return { message: "Login successful", username: user.username };
+});
+
+app.get("/all-users", async () => {
+  const users = await UserModel.find();
+  return { users };
+})
+
+app.get("/user/:id", async ({ params }) => {
+  const { id } = params;
+  const user = await UserModel.findById(id);
+  if (!user) {
+    return { error: "User not found" };
+  }
+  return { username: user.username };
+});
 
 
-auth.listen(3001);
-console.log("Auth service running on http://localhost:3001");
+
+app.listen(PORT, async () => {
+  await mongoose.connect(MONGOURI)
+    .then(() => console.log("MongoDB connected successfully"))
+    .catch((error) => console.error("Error connecting to MongoDB", error));
+  console.log(`Auth service running on http://localhost:${PORT}`);
+});
