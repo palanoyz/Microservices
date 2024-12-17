@@ -5,11 +5,13 @@ import mongoose, { Schema, model } from "mongoose";
 const PORT = Number(process.env.PORT) || 3003;
 const MONGO_URI = process.env.MONGOURI || "mongodb://localhost:27017/todoApp";
 
-// Connect to MongoDB using Mongoose
-mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log("MongoDB connected successfully with Mongoose!"))
-  .catch((error) => console.error("Error connecting to MongoDB", error));
+// interface
+interface ICreateTodo {
+  body: {
+    time: string;
+    task: string;
+  };
+}
 
 // Define Mongoose schema and model for the todo collection
 const TodoSchema = new Schema(
@@ -25,8 +27,8 @@ const Todo = model("Todo", TodoSchema);
 const app = new Elysia();
 
 // Create a new todo or update an existing one
-app.post("/todos", async ({ body }) => {
-  const { time, task } = (await body) as { time: string; task: string };
+app.post("/todos", async ({ body }: ICreateTodo) => {
+  const { time, task } = await body;
 
   if (!time || !task) {
     return { error: "Time and task are required" };
@@ -41,7 +43,8 @@ app.post("/todos", async ({ body }) => {
       await existingTodo.save();
     } else {
       // Add a new task
-      await Todo.create({ time, task });
+      const todo = new Todo({ time, task });
+      await todo.save();
     }
 
     const updatedTodos = await Todo.find();
@@ -52,13 +55,15 @@ app.post("/todos", async ({ body }) => {
     };
   } catch (error) {
     console.error("Error in POST /todos:", error);
-    return { error: "An error occurred while processing your request." };
+    return {
+      error: "An error occurred while processing your request.",
+    };
   }
 });
 
 // Edit an existing todo
-app.put("/todos", async ({ body }) => {
-  const { time, task } = (await body) as { time: string; task: string };
+app.put("/todos", async ({ body }: ICreateTodo) => {
+  const { time, task } = await body;
 
   if (!time || !task) {
     return { error: "Time and task are required" };
@@ -87,8 +92,8 @@ app.put("/todos", async ({ body }) => {
 });
 
 // Delete a todo
-app.delete("/todos", async ({ body }) => {
-  const { time } = (await body) as { time: string };
+app.delete("/todos", async ({ body }: ICreateTodo) => {
+  const { time } = await body;
 
   if (!time) {
     return { error: "Time is required" };
@@ -113,6 +118,12 @@ app.delete("/todos", async ({ body }) => {
 });
 
 // Start the server
-app.listen(PORT, () =>
-  console.log(`Elysia server running on http://localhost:${PORT} 🚀`)
-);
+app.listen(PORT, async () => {
+  // Connect to MongoDB using Mongoose
+  await mongoose
+    .connect(MONGO_URI)
+    .then(() => console.log("MongoDB connected successfully with Mongoose!"))
+    .catch((error) => console.error("Error connecting to MongoDB", error));
+
+  console.log(`Elysia server running on http://localhost:${PORT} 🚀`);
+});
