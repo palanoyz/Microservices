@@ -1,7 +1,25 @@
 import { Elysia } from "elysia";
+import { readFileSync } from "fs";
 
-const app = new Elysia().get("/", () => "Hello Elysia").listen(3000);
+interface TodoList {
+  [key: string]: string;
+}
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+const DATA_FILE = "../data.json";
+
+const loadTodos = (): TodoList[] => {
+  const data = JSON.parse(readFileSync(DATA_FILE, "utf-8"));
+  return data["todo-list"];
+};
+
+const app = new Elysia()
+  .get("/", () => "Hello Elysia")
+  .get("/todos", () => loadTodos())
+  .get("/todos/:time", ({ params }) => {
+    const todos = loadTodos();
+    const slot = todos.find((todo) => todo[params.time] !== undefined);
+    return slot || { message: "Time slot not found" };
+  })
+  .listen(3002); // Run on port 3002
+
+console.log(`Elysia server running on http://localhost:3002 🚀`);
