@@ -6,8 +6,8 @@ const PORT = process.env.PORT || 3001;
 const MONGOURI = String(process.env.MONGOURI);
 const app = new Elysia();
 
-app.post("/register", async ({ body }) => {
-  const { username, password } = body as { username: string; password: string };
+app.post("/register", async ({ body }: { body: { username: string; password: string }}) => {
+  const { username, password } = body;
   const user = await UserModel.findOne({ username });
   if (user) {
     return { error: "User already exists" };
@@ -17,8 +17,8 @@ app.post("/register", async ({ body }) => {
   return { message: "User registered successfully", username: result.username };
 })
 
-app.post("/login", async ({ body }) => {
-  const { username, password } = body as { username: string; password: string };
+app.post("/login", async ({ body }: { body: { username: string; password: string }}) => {
+  const { username, password } = body;
   const user = await UserModel.findOne({ username, password });
   if (!user) {
     return { error: "Invalid username or password" };
