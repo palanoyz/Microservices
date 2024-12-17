@@ -89,6 +89,6 @@ app.delete("/todos", async ({ body }) => {
 });
 
 // Start the server
-app.listen(3000, () =>
+app.listen(3003, () =>
   console.log("Elysia server running on http://localhost:3000 🚀")
 );
