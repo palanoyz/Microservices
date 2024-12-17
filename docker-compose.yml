@@ -1,0 +1,29 @@
+version: "3.1"
+
+services:
+  user-services:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3001
+    ports:
+      - "3001:3001"
+
+  restaurant-services:
+    build:
+      context: ./get-todolist-service
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3002
+    ports:
+      - "3002:3002"
+
+  order-services:
+    build:
+      context: ./todolist-service
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3003
+    ports:
+      - "3003:3003"

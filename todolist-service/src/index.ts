@@ -1,22 +1,21 @@
 import { Elysia } from "elysia";
-import { readFileSync, writeFileSync } from "fs";
+import mockdata from "../../data.json"; // Importing the mock data
 
 interface TodoRequestBody {
   time: string;
-  task: string;
+  task?: string; // Optional because DELETE only needs time
 }
 
 const app = new Elysia();
 
-const DATA_FILE = "./data.json";
+// Function to simulate saving data (in-memory update for now)
+const saveData = (data: any) => {
+  // This function won't actually save data to a file in this version
+  // You would need a method to save the data to disk (like `fs.writeFileSync`) if you wish
+  console.log("Simulated saving data:", JSON.stringify(data, null, 2));
+};
 
-// Function to load data
-const loadData = () => JSON.parse(readFileSync(DATA_FILE, "utf-8"));
-// Function to save data
-const saveData = (data: any) =>
-  writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-
-// create todo
+// Create a new todo or update an existing one
 app.post("/todos", async ({ body }) => {
   const { time, task } = (await body) as TodoRequestBody;
 
@@ -24,23 +23,21 @@ app.post("/todos", async ({ body }) => {
     return { error: "Time and task are required" };
   }
 
-  const data = loadData();
-  const todo = data["todo-list"].find(
-    (item: string) => Object.keys(item)[0] === time
+  const todo = mockdata["todo-list"].find(
+    (item: any) => Object.keys(item)[0] === time
   );
 
   if (todo) {
     todo[time] = task; // Update the existing task
   } else {
-    data["todo-list"].push({ [time]: task }); // Add a new task
+    mockdata["todo-list"].push({ [time]: task }); // Add a new task
   }
 
-  // update data.json
-  saveData(data);
+  saveData(mockdata); // Simulate saving the updated data
 
   return {
     message: "Task added/updated successfully",
-    todos: data["todo-list"],
+    todos: mockdata["todo-list"],
   };
 });
 
@@ -52,15 +49,17 @@ app.put("/todos", async ({ body }) => {
     return { error: "Time and task are required" };
   }
 
-  const data = loadData();
-  const todo = data["todo-list"].find(
+  const todo = mockdata["todo-list"].find(
     (item: any) => Object.keys(item)[0] === time
   );
 
   if (todo) {
-    todo[time] = task; // Update the task
-    saveData(data);
-    return { message: "Task updated successfully", todos: data["todo-list"] };
+    todo[time:any] = task; // Update the task
+    saveData(mockdata); // Simulate saving the updated data
+    return {
+      message: "Task updated successfully",
+      todos: mockdata["todo-list"],
+    };
   } else {
     return { error: "Task not found for the given time" };
   }
@@ -74,15 +73,17 @@ app.delete("/todos", async ({ body }) => {
     return { error: "Time is required" };
   }
 
-  const data = loadData();
-  const index = data["todo-list"].findIndex(
+  const index = mockdata["todo-list"].findIndex(
     (item: any) => Object.keys(item)[0] === time
   );
 
   if (index !== -1) {
-    data["todo-list"].splice(index, 1); // Remove the task
-    saveData(data);
-    return { message: "Task deleted successfully", todos: data["todo-list"] };
+    mockdata["todo-list"].splice(index, 1); // Remove the task
+    saveData(mockdata); // Simulate saving the updated data
+    return {
+      message: "Task deleted successfully",
+      todos: mockdata["todo-list"],
+    };
   } else {
     return { error: "Task not found for the given time" };
   }
@@ -90,5 +91,5 @@ app.delete("/todos", async ({ body }) => {
 
 // Start the server
 app.listen(3003, () =>
-  console.log("Elysia server running on http://localhost:3000 🚀")
+  console.log("Elysia server running on http://localhost:3003 🚀")
 );
