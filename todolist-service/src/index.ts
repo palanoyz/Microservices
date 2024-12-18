@@ -1,9 +1,10 @@
 import { Elysia } from "elysia";
-import mongoose, { Schema, model } from "mongoose";
+import mongoose from "mongoose";
+import { Todo } from "../model/TodoModel";
 
 // Constants for environment variables
 const PORT = Number(process.env.PORT) || 3003;
-const MONGO_URI = process.env.MONGOURI || "mongodb://localhost:27017/todoApp";
+const MONGO_URI = process.env.MONGOURI || "mongodb://localhost:27017/";
 
 // interface
 interface ICreateTodo {
@@ -12,17 +13,6 @@ interface ICreateTodo {
     task: string;
   };
 }
-
-// Define Mongoose schema and model for the todo collection
-const TodoSchema = new Schema(
-  {
-    time: { type: String, required: true, unique: true },
-    task: { type: String, required: true },
-  },
-  { timestamps: true } // Automatically adds createdAt and updatedAt fields
-);
-
-const Todo = model("Todo", TodoSchema);
 
 const app = new Elysia();
 
@@ -125,5 +115,5 @@ app.listen(PORT, async () => {
     .then(() => console.log("MongoDB connected successfully with Mongoose!"))
     .catch((error) => console.error("Error connecting to MongoDB", error));
 
-  console.log(`Elysia server running on http://localhost:${PORT} 🚀`);
+  console.log(`Todolist service running on http://localhost:${PORT}`);
 });
