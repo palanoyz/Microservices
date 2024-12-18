@@ -1,6 +1,18 @@
 version: "3.1"
 
 services:
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://microservices-auth-services-1:3001
+      - GET_TODOLIST_SERVICE_URL=http://microservices-get-todolist-services-1:3002
+      - TODOLIST_SERVICE_URL=http://microservices-todolist-services-1:3003
+    ports:
+      - "3000:3000"
+
   auth-services:
     build:
       context: ./auth-service

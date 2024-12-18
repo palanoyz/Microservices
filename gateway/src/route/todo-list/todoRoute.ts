@@ -22,7 +22,7 @@ const router = new Elysia().group("/todo", (app) =>
         })
         .delete("/", async ({ body }: ITodo) => {
             const { time } = body;
-            const { data } = await todoService.delete(`/todos`);
+            const { data } = await todoService.delete("/todos", { data: { time } });
             return data;
         })
 );

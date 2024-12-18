@@ -10,8 +10,8 @@ const app = new Elysia();
 // Route to get all todos
 app.get("/todos", async () => {
   try {
-    const todos = await Todo.find({});
-    return { todos };
+    const todo = await Todo.find({});
+    return { todo };
   } catch (error) {
     console.error("Error fetching todos:", error);
     return { error: "Failed to fetch todos" };
@@ -22,8 +22,11 @@ app.get("/todos", async () => {
 app.get("/todos/:time", async ({ params }) => {
   try {
     const { time } = params;
-    const todo = await Todo.find({ time });
-    return { success: true, todo };
+    const todo = await Todo.findOne({ time });
+    if (!todo) {
+      return { error: "Todo not found" };
+    }
+    return { todo };
   } catch (error) {
     console.error("Error fetching todo:", error);
     return { success: false, error: "Failed to fetch todo" };

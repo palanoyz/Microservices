@@ -34,8 +34,7 @@ const router = new Elysia().group("/user", (app) =>
             });
 
             return {
-                message: "Register success",
-                username: data.username,
+                data
             };
         })
         .post("/login", async ({ body, cookie: { token } }: ILogin) => {
@@ -54,8 +53,7 @@ const router = new Elysia().group("/user", (app) =>
             });
 
             return {
-                message: "Login success",
-                username: data.username,
+                data
             };
         })
         // .get("/user", async ({ cookie: { token } }: { cookie: { token: { value: any } } }) => {
@@ -65,9 +63,9 @@ const router = new Elysia().group("/user", (app) =>
         //         data,
         //     };
         // })
-        .get("/", async () => {
+        .get("/all-users", async () => {
             const { data } = await authService.get("/all-users");
-            return {    
+            return {
                 message: "Get all users success",
                 data,
             };
@@ -77,8 +75,7 @@ const router = new Elysia().group("/user", (app) =>
             const { data } = await authService.get(`/user/${id}`);
 
             return {
-                message: "Get user by id success",
-                data,
+                data
             };
         })
 );

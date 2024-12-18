@@ -1,105 +1,27 @@
 import { Elysia } from "elysia";
-import { authService, getTodolistService, todolistService } from "./lib/Axios";
+import { jwt } from "@elysiajs/jwt";
+import { cookie } from "@elysiajs/cookie";
+import { swagger } from "@elysiajs/swagger";
+import userRoute from "./route/user/userRoute";
+import getTodoRoute from "./route/todo-list/getTodoRoute";
+import todoRoute from "./route/todo-list/todoRoute";
 
-// Create the Gateway app
-const app = new Elysia();
+const app = new Elysia()
+  .use(jwt({
+    name: "jwt",
+    secret: "Pikachu, I choose you!"
+  }))
+  .use(cookie()).use(swagger({
+    path: "/api-docs",
+  }))
 
-//Auth Service
-app.post("/register", async ({ body }) => {
-  try {
-    const response = await authService.post("/register", body);
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to register user",
-      details: error.response?.data || error.message,
-    };
-  }
-});
-app.post("/login", async ({ body }) => {
-  try {
-    const response = await authService.post("/login", body);
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to login",
-      details: error.response?.data || error.message,
-    };
-  }
-});
-app.get("/all-users", async () => {
-  try {
-    const response = await authService.get("/all-users");
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to fetch users",
-      details: error.response?.data || error.message,
-    };
-  }
-});
+app.get("/", () => "Gate Open KAIHO!");
 
-//GetTodoList Service
-app.get("/todos", async () => {
-  try {
-    const response = await getTodolistService.get("/todos");
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to fetch todos",
-      details: error.response?.data || error.message,
-    };
-  }
-});
-app.get("/todos/:time", async ({ params }) => {
-  try {
-    const response = await getTodolistService.get(`/todos/${params.time}`);
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to fetch todo by time",
-      details: error.response?.data || error.message,
-    };
-  }
-});
+app.use(userRoute);
+app.use(getTodoRoute);
+app.use(todoRoute);
 
-//TodoList Service
-app.post("/todos", async ({ body }) => {
-  try {
-    const response = await todolistService.post("/todos", body);
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to add/update todo",
-      details: error.response?.data || error.message,
-    };
-  }
-});
-app.put("/todos", async ({ body }) => {
-  try {
-    const response = await todolistService.put("/todos", body);
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to update todo",
-      details: error.response?.data || error.message,
-    };
-  }
-});
-app.delete("/todos", async ({ body }) => {
-  try {
-    const response = await todolistService.delete("/todos", { data: body });
-    return response.data;
-  } catch (error: any) {
-    return {
-      error: "Failed to delete todo",
-      details: error.response?.data || error.message,
-    };
-  }
-});
-
-// Start the Gateway Service
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`🦊 Gateway Service running at http://localhost:${PORT}`);
-});
+app.listen(3000);
+console.log(
+  `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
+);
